@@ -23,6 +23,7 @@ pip install mpl-image-segmenter
 
 API <api/mpl_image_segmenter>
 contributing
+differences
 ```
 
 ```{toctree}

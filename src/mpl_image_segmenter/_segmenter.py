@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-class image_segmenter:
+class ImageSegmenter:
     """Manually segment an image with the lasso selector."""
 
     def __init__(  # type: ignore
@@ -26,7 +26,6 @@ class image_segmenter:
         mask=None,
         mask_colors=None,
         mask_alpha=0.75,
-        lineprops=None,
         props=None,
         lasso_mousebutton="left",
         pan_mousebutton="middle",
@@ -35,7 +34,7 @@ class image_segmenter:
         **kwargs,
     ):
         """
-        Manually segmenting an image.
+        Manually segment an image.
 
         Parameters
         ----------
@@ -51,10 +50,6 @@ class image_segmenter:
         mask_alpha : float, default .75
             The alpha values to use for selected regions. This will always override
             the alpha values in mask_colors if any were passed
-        lineprops : dict, default: None
-            DEPRECATED - use props instead.
-            lineprops passed to LassoSelector. If None the default values are:
-            {"color": "black", "linewidth": 1, "alpha": 0.8}
         props : dict, default: None
             props passed to LassoSelector. If None the default values are:
             {"color": "black", "linewidth": 1, "alpha": 0.8}
@@ -113,11 +108,8 @@ class image_segmenter:
         self._mask = self.ax.imshow(self._overlay)
 
         default_props = {"color": "black", "linewidth": 1, "alpha": 0.8}
-        if (props is None) and (lineprops is None):
+        if props is None:
             props = default_props
-        elif (lineprops is not None) and (mpl_version >= "3.7"):
-            print("*lineprops* is deprecated - please use props")
-            props = {"color": "black", "linewidth": 1, "alpha": 0.8}
 
         useblit = False if "ipympl" in get_backend().lower() else True
         button_dict = {"left": 1, "middle": 2, "right": 3}
