@@ -1,17 +1,25 @@
-from matplotlib.widgets import LassoSelector
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+import numpy as np
+from matplotlib import __version__ as mpl_version
+from matplotlib import get_backend
 from matplotlib.colors import TABLEAU_COLORS, XKCD_COLORS, to_rgba_array
 from matplotlib.path import Path
-from matplotlib import __version__ as mpl_version
-from matplotlib.pyplot import ioff
-import numpy as np
-from mpl_interactions.generic import panhandler, zoom_factoy
+from matplotlib.pyplot import ioff, subplots
+from matplotlib.widgets import LassoSelector
+from mpl_interactions import zoom_factory
+from mpl_interactions.generic import panhandler
+
+if TYPE_CHECKING:
+    from typing import Any
+
 
 class image_segmenter:
-    """
-    Manually segment an image with the lasso selector.
-    """
+    """Manually segment an image with the lasso selector."""
 
-    def __init__(
+    def __init__(  # type: ignore
         self,
         img,
         nclasses=1,
@@ -27,21 +35,22 @@ class image_segmenter:
         **kwargs,
     ):
         """
-        Create an image segmenter. Any ``kwargs`` will be passed through to the ``imshow``
-        call that displays *img*.
+        Manually segmenting an image.
 
         Parameters
         ----------
         img : array_like
             A valid argument to imshow
         nclasses : int, default 1
+            How many classes to have in the mask.
         mask : arraylike, optional
             If you want to pre-seed the mask
         mask_colors : None, color, or array of colors, optional
-            the colors to use for each class. Unselected regions will always be totally transparent
+            the colors to use for each class. Unselected regions will always be
+            totally transparent
         mask_alpha : float, default .75
-            The alpha values to use for selected regions. This will always override the alpha values
-            in mask_colors if any were passed
+            The alpha values to use for selected regions. This will always override
+            the alpha values in mask_colors if any were passed
         lineprops : dict, default: None
             DEPRECATED - use props instead.
             lineprops passed to LassoSelector. If None the default values are:
@@ -52,8 +61,8 @@ class image_segmenter:
         lasso_mousebutton : str, or int, default: "left"
             The mouse button to use for drawing the selecting lasso.
         pan_mousebutton : str, or int, default: "middle"
-            The button to use for `~mpl_interactions.generic.panhandler`. One of 'left', 'middle' or
-            'right', or 1, 2, 3 respectively.
+            The button to use for `~mpl_interactions.generic.panhandler`. One of
+            'left', 'middle', 'right', or 1, 2, 3 respectively.
         ax : `matplotlib.axes.Axes`, optional
             The axis on which to plot. If *None* a new figure will be created.
         figsize : (float, float), optional
@@ -99,8 +108,7 @@ class image_segmenter:
             self.fig = self.ax.figure
         else:
             with ioff():
-                self.fig = figure(figsize=figsize)
-                self.ax = self.fig.gca()
+                self.fig, self.ax = subplots(figsize=figsize)
         self.displayed = self.ax.imshow(self._img, **kwargs)
         self._mask = self.ax.imshow(self._overlay)
 
@@ -120,11 +128,19 @@ class image_segmenter:
 
         if mpl_version < "3.7":
             self.lasso = LassoSelector(
-                self.ax, self._onselect, lineprops=props, useblit=useblit, button=lasso_mousebutton
+                self.ax,
+                self._onselect,
+                lineprops=props,
+                useblit=useblit,
+                button=lasso_mousebutton,
             )
         else:
             self.lasso = LassoSelector(
-                self.ax, self._onselect, props=props, useblit=useblit, button=lasso_mousebutton
+                self.ax,
+                self._onselect,
+                props=props,
+                useblit=useblit,
+                button=lasso_mousebutton,
             )
         self.lasso.set_visible(True)
 
@@ -138,7 +154,7 @@ class image_segmenter:
         self.current_class = 1
         self.erasing = False
 
-    def _onselect(self, verts):
+    def _onselect(self, verts: Any) -> None:
         self.verts = verts
         p = Path(verts)
         self.indices = p.contains_points(self.pix, radius=0).reshape(self.mask.shape)
@@ -152,5 +168,5 @@ class image_segmenter:
         self._mask.set_data(self._overlay)
         self.fig.canvas.draw_idle()
 
-    def _ipython_display_(self):
-        display(self.fig.canvas)  # noqa: F405, F821
+    def _ipython_display_(self) -> None:
+        display(self.fig.canvas)  # type: ignore # noqa: F821

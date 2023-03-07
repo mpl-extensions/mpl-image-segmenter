@@ -7,6 +7,7 @@
 # -- Path setup --------------------------------------------------------------
 
 import inspect
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -20,7 +21,6 @@ try:
     from mpl_image_segmenter import __version__ as release
 except ImportError:
     release = "unknown"
-
 
 
 # -- Project information -----------------------------------------------------
@@ -186,9 +186,7 @@ thebe_config = {
 
 # based on pandas/doc/source/conf.py
 def linkcode_resolve(domain, info):
-    """
-    Determine the URL corresponding to Python object
-    """
+    """Determine the URL corresponding to Python object."""
     if domain != "py":
         return None
 
