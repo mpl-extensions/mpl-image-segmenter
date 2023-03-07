@@ -1,0 +1,21 @@
+{
+  "template": "https://github.com/ianhi/pyrepo-cookiecutter",
+  "commit": "91e48fd8a99de0221b538be1781630e323d38f87",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "full_name": "Ian Hunt-Isaak",
+      "email": "ianhuntisaak@gmail.com",
+      "github_username": "ianhi",
+      "project_name": "mpl-image-segmenter",
+      "project_slug": "mpl_image_segmenter",
+      "project_short_description": "Manually segment images with matplotlib",
+      "pypi_username": "ianhi",
+      "_copy_without_render": [
+        ".github/workflows/*"
+      ],
+      "_template": "https://github.com/ianhi/pyrepo-cookiecutter"
+    }
+  },
+  "directory": null
+}
