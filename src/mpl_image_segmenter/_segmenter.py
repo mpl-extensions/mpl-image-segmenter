@@ -143,12 +143,22 @@ class ImageSegmenter:
         self._pm = PanManager(self.fig, button=pan_mousebutton)
         self.disconnect_zoom = zoom_factory(self.ax)
         self.current_class = 1
-        self.erasing = False
+        self._erasing = False
         self._paths: dict[str, list[Path]] = {"adding": [], "erasing": []}
 
     @property
     def panmanager(self) -> PanManager:
         return self._pm
+
+    @property
+    def erasing(self) -> bool:
+        return self._erasing
+
+    @erasing.setter
+    def erasing(self, val: bool) -> None:
+        if not isinstance(val, bool):
+            raise TypeError(f"Erasing must be a bool - got type {type(val)}")
+        self._erasing = val
 
     def get_paths(self) -> dict[str, list[Path]]:
         """
@@ -164,7 +174,7 @@ class ImageSegmenter:
     def _onselect(self, verts: Any) -> None:
         p = Path(verts)
         self.indices = p.contains_points(self.pix, radius=0).reshape(self.mask.shape)
-        if self.erasing:
+        if self._erasing:
             self.mask[self.indices] = 0
             self._overlay[self.indices] = [0, 0, 0, 0]
             self._paths["erasing"].append(p)
