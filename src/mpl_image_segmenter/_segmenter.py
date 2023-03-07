@@ -140,21 +140,38 @@ class ImageSegmenter:
         xv, yv = np.meshgrid(pix_y, pix_x)
         self.pix = np.vstack((xv.flatten(), yv.flatten())).T
 
-        self.ph = PanManager(self.fig, button=pan_mousebutton)
+        self._pm = PanManager(self.fig, button=pan_mousebutton)
         self.disconnect_zoom = zoom_factory(self.ax)
         self.current_class = 1
         self.erasing = False
+        self._paths: dict[str, list[Path]] = {"adding": [], "erasing": []}
+
+    @property
+    def panmanager(self) -> PanManager:
+        return self._pm
+
+    def get_paths(self) -> dict[str, list[Path]]:
+        """
+        Get a dictionary of all the paths used to create the mask.
+
+        Returns
+        -------
+        dict :
+            With keys *adding* and *erasing* each containing a list of paths.
+        """
+        return self._paths
 
     def _onselect(self, verts: Any) -> None:
-        self.verts = verts
         p = Path(verts)
         self.indices = p.contains_points(self.pix, radius=0).reshape(self.mask.shape)
         if self.erasing:
             self.mask[self.indices] = 0
             self._overlay[self.indices] = [0, 0, 0, 0]
+            self._paths["erasing"].append(p)
         else:
             self.mask[self.indices] = self.current_class
             self._overlay[self.indices] = self.mask_colors[self.current_class - 1]
+            self._paths["adding"].append(p)
 
         self._mask.set_data(self._overlay)
         self.fig.canvas.draw_idle()

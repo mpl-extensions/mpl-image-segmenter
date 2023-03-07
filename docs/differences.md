@@ -25,3 +25,12 @@ segmenter = image_segmenter(img)
 
 The `lineprops` argument has been dropped in favor `props` to be consistent with
 Matplotlib 3.7+.
+
+
+## Properties
+
+
+`segmenter.ph` has been replaced by `segmenter.panmanager`
+
+
+`segmenter.verts` which was never fully functional has been removed and replaced by `segmenter.get_paths()`
