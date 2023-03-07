@@ -9,8 +9,7 @@ from matplotlib.colors import TABLEAU_COLORS, XKCD_COLORS, to_rgba_array
 from matplotlib.path import Path
 from matplotlib.pyplot import ioff, subplots
 from matplotlib.widgets import LassoSelector
-from mpl_interactions import zoom_factory
-from mpl_interactions.generic import panhandler
+from mpl_pan_zoom import PanManager, zoom_factory
 
 if TYPE_CHECKING:
     from typing import Any
@@ -141,7 +140,7 @@ class ImageSegmenter:
         xv, yv = np.meshgrid(pix_y, pix_x)
         self.pix = np.vstack((xv.flatten(), yv.flatten())).T
 
-        self.ph = panhandler(self.fig, button=pan_mousebutton)
+        self.ph = PanManager(self.fig, button=pan_mousebutton)
         self.disconnect_zoom = zoom_factory(self.ax)
         self.current_class = 1
         self.erasing = False
