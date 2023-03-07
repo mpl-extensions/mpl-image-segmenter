@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from numbers import Integral
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -21,7 +22,7 @@ class ImageSegmenter:
     def __init__(  # type: ignore
         self,
         img,
-        nclasses=1,
+        classes=1,
         mask=None,
         mask_colors=None,
         mask_alpha=0.75,
@@ -39,8 +40,8 @@ class ImageSegmenter:
         ----------
         img : array_like
             A valid argument to imshow
-        nclasses : int, default 1
-            How many classes to have in the mask.
+        classes : int, iterable[string], default 1
+            If a number How many classes to have in the mask.
         mask : arraylike, optional
             If you want to pre-seed the mask
         mask_colors : None, color, or array of colors, optional
@@ -69,13 +70,20 @@ class ImageSegmenter:
 
         self.mask_alpha = mask_alpha
 
+        if isinstance(classes, Integral):
+            self._classes: list[str | int] = list(range(classes))
+        else:
+            self._classes = classes
+        self._n_classes = len(self._classes)
         if mask_colors is None:
-            # this will break if there are more than 10 classes
-            if nclasses <= 10:
-                self.mask_colors = to_rgba_array(list(TABLEAU_COLORS)[:nclasses])
+            if self._n_classes <= 10:
+                # There are only 10 tableau colors
+                self.mask_colors = to_rgba_array(
+                    list(TABLEAU_COLORS)[: self._n_classes]
+                )
             else:
                 # up to 949 classes. Hopefully that is always enough....
-                self.mask_colors = to_rgba_array(list(XKCD_COLORS)[:nclasses])
+                self.mask_colors = to_rgba_array(list(XKCD_COLORS)[: self._n_classes])
         else:
             self.mask_colors = to_rgba_array(np.atleast_1d(mask_colors))
             # should probably check the shape here
@@ -90,8 +98,7 @@ class ImageSegmenter:
             self.mask = mask
 
         self._overlay = np.zeros((*self._img.shape[:2], 4))
-        self.nclasses = nclasses
-        for i in range(nclasses + 1):
+        for i in range(self._n_classes + 1):
             idx = self.mask == i
             if i == 0:
                 self._overlay[idx] = [0, 0, 0, 0]
@@ -160,6 +167,26 @@ class ImageSegmenter:
             raise TypeError(f"Erasing must be a bool - got type {type(val)}")
         self._erasing = val
 
+    @property
+    def current_class(self) -> int | str:
+        return self._classes[self._cur_class_idx - 1]
+
+    @current_class.setter
+    def current_class(self, val: int | str) -> None:
+        if isinstance(val, str):
+            if val not in self._classes:
+                raise ValueError(f"{val} is not one of the classes: {self._classes}")
+            # offset by one for the background
+            self._cur_class_idx = self._classes.index(val) + 1
+        elif isinstance(val, Integral):
+            if 0 < val < self._n_classes + 1:
+                self._cur_class_idx = val
+            else:
+                raise ValueError(
+                    f"Current class must be bewteen 1 and {self._n_classes}."
+                    " It cannot be 0 as 0 is the background."
+                )
+
     def get_paths(self) -> dict[str, list[Path]]:
         """
         Get a dictionary of all the paths used to create the mask.
@@ -179,8 +206,8 @@ class ImageSegmenter:
             self._overlay[self.indices] = [0, 0, 0, 0]
             self._paths["erasing"].append(p)
         else:
-            self.mask[self.indices] = self.current_class
-            self._overlay[self.indices] = self.mask_colors[self.current_class - 1]
+            self.mask[self.indices] = self._cur_class_idx
+            self._overlay[self.indices] = self.mask_colors[self._cur_class_idx - 1]
             self._paths["adding"].append(p)
 
         self._mask.set_data(self._overlay)
