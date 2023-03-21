@@ -21,8 +21,9 @@ class ImageSegmenter:
 
     def __init__(  # type: ignore
         self,
-        img,
+        imgs,
         classes=1,
+        color_image=False,
         mask=None,
         mask_colors=None,
         mask_alpha=0.75,
@@ -38,10 +39,13 @@ class ImageSegmenter:
 
         Parameters
         ----------
-        img : array_like
-            A valid argument to imshow
+        imgs : array_like
+            A single image, or a stack of images shape (N, Y, X)
         classes : int, iterable[string], default 1
             If a number How many classes to have in the mask.
+        color_image : bool, default False
+            If True treat the final dimension of `imgs` as the RGB(A) axis.
+            Allows for shapes like ([N], Y, X, [3,4])
         mask : arraylike, optional
             If you want to pre-seed the mask
         mask_colors : None, color, or array of colors, optional
@@ -89,29 +93,27 @@ class ImageSegmenter:
             # should probably check the shape here
         self.mask_colors[:, -1] = self.mask_alpha
 
-        self._img = np.asarray(img)
+        imgs = np.asanyarray(imgs)
+        self._imgs = self._pad_to_stack(imgs, "imgs", color_image)
+        self._color_image = color_image
 
+        self._image_index = 0
+
+        self._overlay = np.zeros((*self._imgs.shape[1:3], 4))
         if mask is None:
-            self.mask = np.zeros(self._img.shape[:2])
-            """See :doc:`/examples/image-segmentation`."""
+            self.mask = np.zeros(self._imgs.shape[:3])
         else:
-            self.mask = mask
+            self.mask = self._pad_to_stack(mask, "mask", False)
+            self._refresh_overlay_values()
 
-        self._overlay = np.zeros((*self._img.shape[:2], 4))
-        for i in range(self._n_classes + 1):
-            idx = self.mask == i
-            if i == 0:
-                self._overlay[idx] = [0, 0, 0, 0]
-            else:
-                self._overlay[idx] = self.mask_colors[i - 1]
         if ax is not None:
             self.ax = ax
             self.fig = self.ax.figure
         else:
             with ioff():
                 self.fig, self.ax = subplots(figsize=figsize)
-        self.displayed = self.ax.imshow(self._img, **kwargs)
-        self._mask = self.ax.imshow(self._overlay)
+        self._displayed = self.ax.imshow(self._imgs[self._image_index], **kwargs)
+        self._mask_im = self.ax.imshow(self._overlay)
 
         default_props = {"color": "black", "linewidth": 1, "alpha": 0.8}
         if props is None:
@@ -142,8 +144,10 @@ class ImageSegmenter:
             )
         self.lasso.set_visible(True)
 
-        pix_x = np.arange(self._img.shape[0])
-        pix_y = np.arange(self._img.shape[1])
+        # offset shape by 1 because we always pad into
+        # being a stack (N, Y, X, [3,4])
+        pix_x = np.arange(self._imgs.shape[1])
+        pix_y = np.arange(self._imgs.shape[2])
         xv, yv = np.meshgrid(pix_y, pix_x)
         self.pix = np.vstack((xv.flatten(), yv.flatten())).T
 
@@ -152,6 +156,74 @@ class ImageSegmenter:
         self.current_class = 1
         self._erasing = False
         self._paths: dict[str, list[Path]] = {"adding": [], "erasing": []}
+
+    def _refresh_overlay_values(self) -> None:
+        # leave the actual updating of image to other code
+        # in order to easily manage what gets updated and when
+        # the drawing happens
+        for i in range(self._n_classes + 1):
+            idx = self._mask[self._image_index] == i
+            if i == 0:
+                self._overlay[idx] = [0, 0, 0, 0]
+            else:
+                self._overlay[idx] = self.mask_colors[i - 1]
+
+    @staticmethod
+    def _pad_to_stack(arr: np.ndarray, name: str, color_image: bool) -> np.ndarray:
+        if color_image and arr.ndim < 3:
+            raise ValueError(
+                f"{name} must be at least 3 dimensional when *color_image* is True"
+                f" but it is {arr.ndim}D"
+            )
+        if arr.ndim == (2 + color_image):
+            # make shape (1, M, N)
+            #  or (1, M, N, [3, 4])
+            return arr[None, ...]
+        elif arr.ndim == (3 + color_image):
+            return arr
+        else:
+            raise ValueError(
+                f"{name} must be either 2 or 3 dimensional. Did"
+                " you mean to set *color_image* to True?"
+            )
+
+    @property
+    def mask(self) -> np.ndarray:
+        if self._mask.shape[0] == 1:
+            # don't complicate things in the simple case of
+            # one image
+            return self._mask[0]
+        else:
+            return self._mask
+
+    @mask.setter
+    def mask(self, val: np.ndarray) -> None:
+        val = self._pad_to_stack(np.asanyarray(val), "mask", False)
+        if self._color_image:
+            compare_shape = self._imgs.shape[:-1]
+        else:
+            compare_shape = self._imgs.shape
+        if val.shape != compare_shape:
+            raise ValueError("Mask must have the same shape as imgs")
+        self._mask = val
+
+    @property
+    def image_index(self) -> int:
+        return self._image_index
+
+    @image_index.setter
+    def image_index(self, val: int) -> None:
+        if not isinstance(val, Integral):
+            raise ValueError("image_index must be an integer")
+        if val >= self._imgs.shape[0]:
+            raise ValueError(
+                f"Too large - This segmenter only has {self._imgs.shape[0]} images."
+            )
+        self._image_index = val
+        self._refresh_overlay_values()
+        self._displayed.set_data(self._imgs[val])
+        self._mask_im.set_data(self._overlay)
+        self.fig.canvas.draw_idle()
 
     @property
     def panmanager(self) -> PanManager:
@@ -200,17 +272,17 @@ class ImageSegmenter:
 
     def _onselect(self, verts: Any) -> None:
         p = Path(verts)
-        self.indices = p.contains_points(self.pix, radius=0).reshape(self.mask.shape)
+        indices = p.contains_points(self.pix, radius=0).reshape(self._mask.shape[1:3])
         if self._erasing:
-            self.mask[self.indices] = 0
-            self._overlay[self.indices] = [0, 0, 0, 0]
+            self._mask[self._image_index][indices] = 0
+            self._overlay[indices] = [0, 0, 0, 0]
             self._paths["erasing"].append(p)
         else:
-            self.mask[self.indices] = self._cur_class_idx
-            self._overlay[self.indices] = self.mask_colors[self._cur_class_idx - 1]
+            self._mask[self._image_index][indices] = self._cur_class_idx
+            self._overlay[indices] = self.mask_colors[self._cur_class_idx - 1]
             self._paths["adding"].append(p)
 
-        self._mask.set_data(self._overlay)
+        self._mask_im.set_data(self._overlay)
         self.fig.canvas.draw_idle()
 
     def _ipython_display_(self) -> None:
