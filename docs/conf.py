@@ -42,7 +42,7 @@ subprocess.call(
             "--no-toc",
             "--templatedir _templates",
             "--separate",
-            "../mpl_image_segmenter/",
+            "../src/mpl_image_segmenter/",
             # excluded modules
             # nothing here for cookiecutter
         ]
@@ -57,20 +57,15 @@ subprocess.call(
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "jupyter_sphinx",
     "myst_nb",
+    "sphinx_copybutton",
+    "sphinx.ext.napoleon",
     "numpydoc",
     "sphinx.ext.autodoc",
+    "sphinx.ext.inheritance_diagram",
+    "autoapi.sphinx",
     "sphinx.ext.intersphinx",
-    "sphinx.ext.linkcode",
-    "sphinx.ext.mathjax",
-    "sphinx.ext.napoleon",
-    "sphinx_copybutton",
-    "sphinx_panels",
-    "sphinx_thebe",
-    "sphinx_togglebutton",
 ]
-
 
 # API settings
 autodoc_default_options = {
@@ -116,10 +111,6 @@ linkcheck_anchors = False
 linkcheck_ignore = []  # type: ignore
 
 execution_timeout = -1
-jupyter_execute_notebooks = "off"
-if "EXECUTE_NB" in os.environ:
-    print("\033[93;1mWill run Jupyter notebooks!\033[0m")
-    jupyter_execute_notebooks = "force"
 
 # Settings for myst-parser
 myst_enable_extensions = [
@@ -156,32 +147,14 @@ html_copy_source = True  # needed for download notebook button
 html_css_files = [
     "custom.css",
 ]
-html_sourcelink_suffix = ""
-html_static_path = ["_static"]
-html_theme = "sphinx_book_theme"
-html_theme_options = {
-    "launch_buttons": {
-        "binderhub_url": "https://mybinder.org",
-        "colab_url": "https://colab.research.google.com",
-        "notebook_interface": "jupyterlab",
-        "thebe": True,
-        "thebelab": True,
-    },
-    "path_to_docs": "docs",
-    "repository_branch": "main",
-    "repository_url": "https://github.com/ianhi/mpl-image-segmenter",
-    "use_download_button": True,
-    "use_edit_page_button": True,
-    "use_issues_button": True,
-    "use_repository_button": True,
-}
 html_title = "mpl-image-segmenter"
+html_theme = "furo"
 
 master_doc = "index"
-thebe_config = {
-    "repository_url": html_theme_options["repository_url"],
-    "repository_branch": html_theme_options["repository_branch"],
-}
+# thebe_config = {
+#     "repository_url": html_theme_options["repository_url"],
+#     "repository_branch": html_theme_options["repository_branch"],
+# }
 
 
 # based on pandas/doc/source/conf.py

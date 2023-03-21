@@ -46,17 +46,13 @@ dev = [
 ]
 doc = [
     "ipympl",
-    "jupyter-sphinx",
-    "mpl-playback >= 0.1.1",
-    "myst-nb",
+    "myst_nb",
+    "autoapi",
+    "furo",
     "numpydoc",
-    "Sphinx >= 1.5",
-    "sphinx-book-theme",
+    "sphinx",
+    "sphinx-autobuild",
     "sphinx-copybutton",
-    "sphinx-gallery >= 0.8.2",
-    "sphinx-panels",
-    "sphinx-thebe",
-    "sphinx-togglebutton",
 ]
 
 [project.urls]

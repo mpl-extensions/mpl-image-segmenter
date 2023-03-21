@@ -49,7 +49,7 @@ jobs:
           pip install -e ".[test]"
 
       - name: Test
-        run: pytest -v --color=yes --cov=pymmcore_plus --cov-report=xml
+        run: pytest -v --color=yes --cov=mpl_image_segmenter --cov-report=xml
 
       - name: Coverage
         uses: codecov/codecov-action@v3
