@@ -4,7 +4,7 @@ from numbers import Integral
 from typing import TYPE_CHECKING
 
 import numpy as np
-from matplotlib import __version__ as mpl_version
+from matplotlib import __version_info__ as mpl_version_info
 from matplotlib import get_backend
 from matplotlib.colors import TABLEAU_COLORS, XKCD_COLORS, to_rgba_array
 from matplotlib.path import Path
@@ -126,7 +126,7 @@ class ImageSegmenter:
         if isinstance(lasso_mousebutton, str):
             lasso_mousebutton = button_dict[lasso_mousebutton.lower()]
 
-        if mpl_version < "3.7":
+        if mpl_version_info < (3, 7):
             self.lasso = LassoSelector(
                 self.ax,
                 self._onselect,

@@ -24,7 +24,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "matplotlib",
+    "matplotlib>=3.5",
     "mpl-pan-zoom",
     "numpy",
 ]
