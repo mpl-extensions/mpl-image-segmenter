@@ -5,9 +5,9 @@ from pathlib import Path
 import numpy as np
 
 __all__ = [
-    "gray_image_stack",
     "color_image_stack",
     "example_mask_stack",
+    "gray_image_stack",
 ]
 
 

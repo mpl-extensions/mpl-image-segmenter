@@ -2,6 +2,7 @@ import re
 
 import numpy as np
 import pytest
+
 from mpl_image_segmenter import ImageSegmenter
 
 
