@@ -196,4 +196,4 @@ def linkcode_resolve(domain, info):
 
     fn = os.path.relpath(fn, start=os.path.dirname("../mpl_image_segmenter"))
 
-    return f"https://github.com/ianhi/mpl-image-segmenter/blob/main/mpl_image_segmenter/{fn}{linespec}"  # noqa
+    return f"https://github.com/ianhi/mpl-image-segmenter/blob/main/mpl_image_segmenter/{fn}{linespec}"
