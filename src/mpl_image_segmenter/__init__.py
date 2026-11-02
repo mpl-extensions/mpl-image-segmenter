@@ -1,4 +1,5 @@
 """Manually segment images with matplotlib."""
+
 from importlib.metadata import PackageNotFoundError, version
 
 try:
